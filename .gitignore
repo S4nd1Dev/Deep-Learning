@@ -1,0 +1,8 @@
+# JANGAN commit dataset (dilarang diunggah ulang ke repo publik)
+train/
+my_train/
+my_val/
+train_sources.csv
+holdout_errors.csv
+__pycache__/
+.ipynb_checkpoints/
