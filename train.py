@@ -80,7 +80,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="../train", help="folder train/ dari dataset")
     ap.add_argument("--epochs", type=int, default=15)
-    ap.add_argument("--bs", type=int, default=16) # batch size bisa disesuaikan sesuai dengan kebutuhan. angka 0 berjalan dengan baik di ram 16 gb, vram 6 gb
+    ap.add_argument("--bs", type=int, default=16) # batch size bisa disesuaikan sesuai dengan kebutuhan. angka 16 berjalan dengan baik di ram 16 gb, vram 6 gb
     ap.add_argument("--size", type=int, default=288, help="resolusi training") # dari 256 ke 288
     ap.add_argument("--lr", type=float, default=1e-4, help="LR backbone")
     ap.add_argument("--head_lr", type=float, default=1e-3)
@@ -135,7 +135,7 @@ def main():
     body = [p for n, p in model.named_parameters() if not n.startswith("backbone.head")]
     opt = torch.optim.AdamW([{"params": body, "lr": a.lr, "base": a.lr},
                              {"params": head, "lr": a.head_lr, "base": a.head_lr}], weight_decay=a.wd)
-    mixup = Mixup(mixup_alpha=0.2, cutmix_alpha=1.0, prob=0.8, switch_prob=0.5,
+    mixup = Mixup(mixup_alpha=0.2, cutmix_alpha=1.0, prob=0.5, switch_prob=0.5,
                   label_smoothing=0.1, num_classes=NUM_CLASSES)
     soft_ce, ls_ce = SoftTargetCrossEntropy(), LabelSmoothingCrossEntropy(0.1)
 
