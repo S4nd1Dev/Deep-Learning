@@ -80,8 +80,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="../train", help="folder train/ dari dataset")
     ap.add_argument("--epochs", type=int, default=15)
-    ap.add_argument("--bs", type=int, default=32)
-    ap.add_argument("--size", type=int, default=256, help="resolusi training")
+    ap.add_argument("--bs", type=int, default=16) # batch size bisa disesuaikan sesuai dengan kebutuhan. angka 0 berjalan dengan baik di ram 16 gb, vram 6 gb
+    ap.add_argument("--size", type=int, default=288, help="resolusi training") # dari 256 ke 288
     ap.add_argument("--lr", type=float, default=1e-4, help="LR backbone")
     ap.add_argument("--head_lr", type=float, default=1e-3)
     ap.add_argument("--wd", type=float, default=0.05)
@@ -91,7 +91,7 @@ def main():
     ap.add_argument("--full", action="store_true", help="latih di my_train + my_val (tanpa seleksi holdout)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--workers", type=int, default=min(8, os.cpu_count() or 2))
+    ap.add_argument("--workers", type=int, default=min(0, os.cpu_count() or 2)) # worker bisa disesuaikan sesuai dengan kebutuhan. angka 0 berjalan dengan baik di ram 16 gb, vram 6 gb
     a = ap.parse_args()
     out = a.out or ("submission/model_full.pth" if a.full else "submission/model.pth")
 
@@ -99,6 +99,7 @@ def main():
     dev = torch.device("cuda" if torch.cuda.is_available()
                        else "mps" if torch.backends.mps.is_available() else "cpu")
     cuda = dev.type == "cuda"
+    torch.backends.cudnn.benchmark = cuda
     amp_dtype = torch.bfloat16 if (cuda and torch.cuda.is_bf16_supported()) else torch.float16
     amp = (lambda: torch.autocast("cuda", dtype=amp_dtype)) if cuda else contextlib.nullcontext
     scaler = torch.amp.GradScaler("cuda", enabled=cuda and amp_dtype == torch.float16)
@@ -117,7 +118,7 @@ def main():
 
     def val_loader(size):
         ds = datasets.ImageFolder(va_dir, get_transform(size))
-        return ds, DataLoader(ds, 64, shuffle=False, num_workers=a.workers, pin_memory=cuda)
+        return ds, DataLoader(ds, 32, shuffle=False, num_workers=0, pin_memory=cuda)
 
     @torch.no_grad()
     def predict(m, loader):
@@ -183,6 +184,7 @@ def main():
     print(f"\nBest holdout Macro-F1 {best:.4f} @ epoch {best_ep} -> {out}")
     chk = get_model().to(dev)  # verifikasi persis seperti evaluate.py
     chk.load_state_dict(torch.load(out, map_location=dev, weights_only=True), strict=True)
+    torch.cuda.empty_cache()
     print("Sweep resolusi evaluasi (set EVAL_SIZE di submission/model.py ke yang terbaik):")
     for s in (256, 288, 320):
         _, dl = val_loader(s)
