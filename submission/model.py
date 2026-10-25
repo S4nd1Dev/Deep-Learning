@@ -44,7 +44,8 @@ def get_model():
 def get_transform(size=None):
     size = size or EVAL_SIZE
     return transforms.Compose([
-        transforms.Resize((size, size), interpolation=InterpolationMode.BICUBIC),
+        transforms.Resize(size, interpolation=InterpolationMode.BICUBIC),
+        transforms.CenterCrop(size),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
     ])
