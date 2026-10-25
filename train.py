@@ -141,7 +141,7 @@ def main():
 
     spe = len(train_dl); total = a.epochs * spe; warm = spe; step = 0
     best, best_ep = -1.0, 0
-    _, val_dl = val_loader(get_transform().transforms[0].size[0])
+    _, val_dl = val_loader(eval_size())
 
     for ep in range(a.epochs):
         model.train(); t0 = time.time(); run = 0.0
@@ -191,7 +191,7 @@ def main():
         pr, yy = predict(chk, dl)
         f, per = macro_f1(yy, pr.argmax(1))
         print(f"  size {s}: Macro-F1 {f:.4f} | acc {(pr.argmax(1)==yy).mean():.4f} | F1/kelas {[round(v,3) for v in per]}")
-    ds, dl = val_loader(get_transform().transforms[0].size[0])
+    ds, dl = val_loader(eval_size())
     pr, yy = predict(chk, dl)
     with open("holdout_errors.csv", "w", newline="") as fh:
         w = csv.writer(fh); w.writerow(["path", "label", "pred", "conf"])
@@ -200,6 +200,9 @@ def main():
                 w.writerow([p, CLASSES[yy[j]], CLASSES[pr[j].argmax()], f"{pr[j].max():.3f}"])
     print("salah-prediksi holdout -> holdout_errors.csv (cek label yang meragukan)")
 
+def eval_size():
+    s = get_transform().transforms[0].size
+    return s if isinstance(s, int) else s[0]
 
 if __name__ == "__main__":
     main()
